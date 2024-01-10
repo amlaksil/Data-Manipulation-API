@@ -14,6 +14,7 @@ import io
 import json
 import os
 import tempfile
+from datetime import datetime
 
 from flask import jsonify, request, current_app, send_file, Response
 from werkzeug.utils import secure_filename
@@ -25,9 +26,9 @@ from api.v1.views.user import token_required
 
 def type_cast(value):
     """
-    Tries to convert the given value into an integer or float, and returns
-    the converted value. If the conversion fails, the original value is
-    returned
+    Tries to convert the given value into an integer, float, boolean, date,
+    time, percentage, or None, and returns the converted value. If the
+    conversion fails, the original value is returned.
 
     Args:
         value: The value to be typecasted.
@@ -44,6 +45,45 @@ def type_cast(value):
         return float(value)
     except ValueError:
         pass
+
+    if value.lower() == "true":
+        return True
+    elif value.lower() == "false":
+        return False
+
+    try:
+        # Date format: "YYYY-MM-DD"
+        return datetime.strptime(value, "%Y-%m-%d")
+    except ValueError:
+        pass
+
+    try:
+        return datetime.strptime(value, "%H:%M:%S")  # Time format: "HH:MM:SS"
+    except ValueError:
+        pass
+
+    try:
+        # Date and time format: "YYYY-MM-DD HH:MM:SS"
+        return datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        pass
+
+    if value == "":
+        return None
+
+    if value.endswith("%"):
+        try:
+            return float(value[:-1]) / 100  # Percentage format: "X%"
+        except ValueError:
+            pass
+
+    try:
+        return float(value)  # Scientific notation format
+    except ValueError:
+        pass
+
+    if value.lower() == "na" or value.lower() == "unknown":
+        return None
 
     return value
 
@@ -73,12 +113,12 @@ def merge_csv_files(csv_files, technique):
         - The function assumes that the CSV files have a header row.
         - The merging technique determines how the files with different
             headers are combined.
-            - "inner": Only the common columns between the files are retained.
-            - "outer": All columns from all files are retained, with missing
+        - "inner": Only the common columns between the files are retained.
+        - "outer": All columns from all files are retained, with missing
                 values filled with NaN.
-            - "left": All columns from the left file are retained, with missing
+        - "left": All columns from the left file are retained, with missing
                 values filled with NaN.
-            - "right": All columns from the right file are retained, with
+        - "right": All columns from the right file are retained, with
                 missing values filled with NaN.
     Example:
         csv_files = ["file1.csv", "file2.csv", "file3.csv"]
@@ -95,10 +135,10 @@ def merge_csv_files(csv_files, technique):
             common_columns = common_columns.intersection(df.columns)
         dfs.append(df)
 
-    if not common_columns:
+    if not common_columns and technique is not 'inner':
         merged_df = pd.concat(dfs, ignore_index=True)
     else:
-        if len(common_columns) == len(df.columns):
+        if common_columns == set(df.columns):
             """If the file has the same headers. In thiscase, we can
             simply use pd.concat with axis=0 to concatenate the rows
             vertically while preserving the header."""
@@ -127,28 +167,10 @@ def validate_csv():
     Request Parameters:
         - file: The CSV file to be validated (multipart/form-data)
 
-    Returns:
-        - If the CSV file is valid, returns a JSON response with a
-                success message:
-          {
-              "message": "CSV file received and validated successfully"
-          }
-
-        - If the request is missing the file or the file has an unsupported
-                extension, returns a JSON error message:
-          {
-              "error": "No file included in the request"
-          }
-          or
-          {
-              "error": "Invalid file. Only CSV files are supported."
-          }
-
-        - If the CSV file is invalid (e.g., incorrect formatting, missing\
-                columns, or invalid data), returns a JSON error message:
-          {
-              "error": "Invalid CSV file"
-          }
+    Returns: Success message if the file is validated successfully.
+        If not appropriate error message is returned instead.
+       - 400 Bad Request: If the server cannot process the request due to
+            client error.
 
     Example Usage:
         curl -X POST -F "file=@/path/to/your/file.csv"
@@ -156,14 +178,17 @@ def validate_csv():
     """
     # Check if a file is included in the request
     if 'file' not in request.files:
-        return jsonify({'error': 'No file included in the request'}), 400
+        return jsonify({'error': 'No file found in the request.' +
+                        " Please include a file in the 'file' field."}), 400
 
     file = request.files['file']
 
     # Check if the file has a supported extension
     if file.filename == '' or not file.filename.endswith('.csv'):
-        return jsonify(
-            {'error': 'Invalid file. Only CSV files are supported.'}), 400
+        file_extension = file.filename.rsplit(".", 1)[-1]
+        error_message = "Invalid file type. The uploaded file has a '" +\
+            file_extension + "' extension. Only CSV files are supported."
+        return jsonify({'error': error_message}), 400
 
     # Check the file size against the limit
     if file and file.content_length > current_app.config['MAX_CONTENT_LENGTH']:
@@ -186,18 +211,24 @@ def validate_csv():
 
             # Keep track of column data types
             column_data_types = [None] * num_columns
-
+            line_number = 2
             # Validate each row iteratively
             for row in reader:
                 if len(row) != num_columns:
-                    return jsonify({'error': 'Invalid CSV file'}), 400
+                    error_message = 'Invalid CSV file. The length of each ' +\
+                        'row should be consistent. Error at line ' +\
+                        f'{line_number}.'
+                    return jsonify({'error': error_message}), 400
 
                 for i, cell in enumerate(row):
                     cell = cell.strip()
 
                     # Check for missing values
                     if cell == '':
-                        return jsonify({'error': 'Invalid CSV file'}), 400
+                        error_message = 'Invalid CSV file. Missing value ' +\
+                            f'found at line {line_number}, Column ' +\
+                            f'{header[i]}.'
+                        return jsonify({'error': error_message}), 400
 
                     # Set the data type for the column if not set
                     if column_data_types[i] is None:
@@ -207,7 +238,12 @@ def validate_csv():
                     # Perform data type validation
                     value = type_cast(cell)
                     if not isinstance(value, column_data_types[i]):
-                        return jsonify({'error': 'Invalid CSV file'}), 400
+                        error_message = 'Invalid CSV file. Each column ' +\
+                            'should have consistent datatype. Error at line' +\
+                            f" {line_number}. Value '{value}' is not of " +\
+                            f"type '{column_data_types[i]}'."
+                        return jsonify({'error': error_message}), 400
+                line_number += 1
 
         # Remove the temporary file
         os.remove(temp_file_path)
@@ -236,18 +272,27 @@ def merge_csvs(_):
 
     Responses:
         - 200 OK: If the CSV files are successfully merged, the merged CSV file
-                is returned as a downloadable file.
-        - 400 Bad Request: If any of the following conditions occur:
-            - No files are uploaded.
-            - No valid CSV files are uploaded.
-            - An error occurs during the merging process.
+              is returned as a downloadable file.
+        - 400 Bad Request: If the server cannot process the request due to
+              client error.
+
+    Example Usage:
+        curl -X POST -H 'access-token: <token>
+    -F "files=@/path/to/your/file1.csv" -F "files=@/path/f2.csv"
+    http://localhost:5000/api/v1/merge-csvs?technique=<inner>
     """
     # Check if files were uploaded
     if 'files' not in request.files:
-        return jsonify({'error': 'No files were uploaded.'}), 400
+        error_message = 'No file found in the request. Please include files' +\
+            " in the 'files' field."
+        return jsonify({'error': error_message}), 400
 
     files = request.files.getlist('files')
     technique = request.args.get('technique', 'inner')
+    if len(files) < 2:
+        error_message = "You should include at least two files to continue " +\
+            "merging."
+        return jsonify({'error': error_message}), 400
 
     # Save the uploaded files to temporary locations
     saved_files = []
@@ -256,19 +301,20 @@ def merge_csvs(_):
             _, file_path = tempfile.mkstemp(suffix=".csv")
             file.save(file_path)
             saved_files.append(file_path)
+        else:
+            file_extension = file.filename.rsplit(".", 1)[-1]
+            error_message = "Invalid file type. The uploaded " +\
+                f"{file.filename} has a '" + file_extension + "' extension." +\
+                " Only CSV files are supported."
+            return jsonify({'error': error_message}), 400
 
-    if not saved_files:
-        return jsonify({'error': 'No valid CSV files were uploaded.'}), 400
-
+    merged_temp_file = tempfile.NamedTemporaryFile(suffix=".csv", delete=False)
     try:
         merged_df = merge_csv_files(saved_files, technique)
 
         # Generate a unique filename for the merged CSV
         merged_filename = secure_filename('merged.csv')
 
-        # Save the merged DataFrame to a temporary file
-        merged_temp_file = tempfile.NamedTemporaryFile(
-            suffix=".csv", delete=False)
         merged_df.to_csv(merged_temp_file.name, index=False)
         merged_temp_file.close()
 
@@ -302,30 +348,45 @@ def csv_to_json(_):
     Responses:
         - 200 OK: If the CSV file is successfully converted, the converted JSON
             data is returned as a list of dictionaries in the response body.
-        - 400 Bad Request: If no file is present in the request or the uploaded
-            file is not a valid CSV file.
+        - 400 Bad Request: If the server cannot process the request due to
+            client error.
         - 500 Internal Server Error: If an error occurs during the conversion
             process.
+
+    Example Usage: curl -X POST -H 'access-token: <token>
+    -F "file=@/path/to/your/file1.csv"
+    http://localhost:5000/api/v1/csv-to-json
     """
     # Check if `file` is present in the request
     if 'file' not in request.files:
-        return jsonify({'error': 'No file present in the request'}), 400
+        error_message = 'No file found in the request. Please ' +\
+            "include a file in the 'file' field."
+        return jsonify({'error': error_message}), 400
+
     csv_file = request.files['file']
 
-    # if not file.filename.endswith('.csv'):
+    # Check if the file has a supported extension
+    if not csv_file.filename.endswith('.csv'):
+        file_extension = csv_file.filename.rsplit(".", 1)[-1]
+        error_message = "Invalid file type. The uploaded file has a '" +\
+            file_extension + "' extension. Only CSV files are supported."
+        return jsonify({'error': error_message}), 400
+
     # Read the CSV file using pandas
     try:
         df = pd.read_csv(csv_file)
-    except pd.errors.ParseError as e:
-        return jsonify({'error': 'Invalid CSV file format'}), 400
+    except Exception as e:
+        return jsonify({'error': f'While reading the CSV file: {str(e)}'}), 400
 
     try:
         # Convert DataFrame to JSON
         json_data = df.to_dict(orient='records')
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': f'While parsing to dict: {str(e)}'}), 400
 
-    return jsonify({'data': json_data}), 200
+    return Response(
+        json.dumps(json_data, indent=4) + '\n',
+        status=200, mimetype='application/json')
 
 
 @app_views.route('/json-to-csv', methods=['POST'])
@@ -349,33 +410,53 @@ def json_to_csv(_):
                 file, or if the conversion process encounters an error.
         - 415 Unsupported Media Type: If the request does not have the expected
                 Content-Type header.
+
+    Example Usage: curl -X POST -H 'access-token: <token>
+    -F "file=@/path/to/your/file.json"
+    http://localhost:5000/api/v1/json-to-csv
     """
-    # Check if 'data' is present in the request JSON
-    # if 'data' in request.json:
-    if request.headers.get('Content-Type') == 'application/json':
+    content_type = request.headers.get('Content-Type')
+    if content_type == 'application/json':
         try:
-            json_data = request.json['data']
+            if type(request.json) is dict:
+                json_data = request.json['data']
+            else:
+                if not request.data:
+                    return jsonify(
+                        {'error': 'No data is provided in the request'}), 400
+                json_data = request.json
         except Exception as e:
             return jsonify(
                 {'error', 'Failed to parse JSON data: ' + str(e)}), 400
-    elif request.headers.get('Content-Type').startswith('multipart/form-data'):
+    elif content_type is not None and\
+            request.headers.get('Content-Type').startswith(
+                'multipart/form-data'):
         if 'file' in request.files:
             json_file = request.files['file']
+            # Check if the file has a supported extension
+            if not json_file.filename.endswith('.json'):
+                file_extension = json_file.filename.rsplit(".", 1)[-1]
+                error_message = "Invalid file type. The uploaded file has " +\
+                    "a '" + file_extension + "' extension. Only JSON files " +\
+                    "are supported."
+                return jsonify({'error': error_message}), 400
             try:
                 json_data = json.load(json_file)
-                if 'data' in json_data:
-                    json_data = json_data['data']
+                if type(json_data) is dict:
+                    if 'data' in json_data:
+                        json_data = json_data['data']
             except Exception as e:
                 return jsonify(
                     {'error': 'Failed to read and parse JSON file: ' + str(e)}
                 ), 400
         else:
-            return jsonify(
-                {'error': 'No JSON data or file present in the request'}), 400
+            error_message = 'No file found in the request. Please include a' +\
+                " file in the 'file' field."
+            return jsonify({'error': error_message}), 400
     else:
         return jsonify(
-            {'error': 'Invalid Content-Type. Expected "application/json" +\
-            "or "multipart/form-data"'}), 415
+            {'error': "Invalid Content-Type. Expected 'application/json'" +
+             " or 'multipart/form-data'"}), 415
     if isinstance(json_data, str):
         try:
             json_data = json.loads(json_data)
@@ -394,8 +475,8 @@ def json_to_csv(_):
     # Check if each element in the list is a dictionary
     if not all(isinstance(item, dict) for item in json_data):
         return jsonify(
-            {'error': 'Invalid JSON data." +\
-            "Expected a list of dictionaries.'}), 400
+            {'error': 'Invalid JSON data.' +
+             ' Expected a list of dictionaries.'}), 400
 
     # Convert JSON to DataFrame
     try:
@@ -410,13 +491,13 @@ def json_to_csv(_):
     return response
 
 
-@app_views.route('/filter-json', methods=['POST'])
+@app_views.route('/json-filter', methods=['POST'])
 def json_filter():
     """
     Filter JSON data based on criteria provided in the request payload and
     perform pagination.
 
-    Endpoint: POST /filter-json
+    Endpoint: POST /json-filter
 
     Request Parameters:
         - JSON data: The JSON data to be filtered. Attach the data as a JSON
@@ -430,22 +511,39 @@ def json_filter():
         - 200 OK: If the JSON data is successfully filtered and paginated, the
         filtered and paginated data is returned in the response body as a JSON
         object.
-        - 400 Bad Request: If the request does not contain valid JSON data or
-        file, or if the filtering process encounters an error.
+        - 400 Bad Request: If the server cannot process the request due to
+        client error.
         - 415 Unsupported Media Type: If the request does not have the expected
         Content-Type header.
 
+    Example Usage: curl -X POST -H 'criteria: {"Age": {"lte": 30}}'
+    -F "file=@/path/to/your/file.json"
+    http://localhost:5000/api/v1/json-filter?
+    page=<page_number>&limit=<limit_per_page>
     """
-    # Get the payload and data file from the request
-    if request.headers.get('Content-Type') == 'application/json':
+    content_type = request.headers.get('Content-Type')
+    if content_type == 'application/json':
         try:
+            if not request.data:
+                return jsonify(
+                    {'error': 'No data is provided in the request'}), 400
             data = request.json
         except Exception as e:
             return jsonify(
                 {'error', 'Failed to parse JSON data: ' + str(e)}), 400
-    elif request.headers.get('Content-Type').startswith('multipart/form-data'):
+    elif content_type is not None and \
+            request.headers.get('Content-Type').startswith(
+                'multipart/form-data'):
         if 'file' in request.files:
             json_file = request.files['file']
+
+            # Check if the file has a supported extension
+            if not json_file.filename.endswith('.json'):
+                file_extension = json_file.filename.rsplit(".", 1)[-1]
+                error_message = "Invalid file type. The uploaded file has " +\
+                    "a '" + file_extension + "' extension. Only JSON files " +\
+                    "are supported."
+                return jsonify({'error': error_message}), 400
             try:
                 data = json.load(json_file)
             except Exception as e:
@@ -453,27 +551,73 @@ def json_filter():
                     {'error': 'Failed to read and parse JSON file: ' +
                      str(e)}), 400
         else:
-            return jsonify(
-                {'error': 'No JSON data or file present in the request'}), 400
+            error_message = 'No file found in the request. Please include ' +\
+                "a file in the 'file' field."
+            return jsonify({'error': error_message}), 400
     else:
         return jsonify({
-            'error': 'Invalid Content-Type. Expected "application/json" or' +
-            '"multipart/form-data"'
-            }), 415
+            "error": "Invalid Content-Type. Expected 'application/json' or " +
+            "'multipart/form-data'"
+        }), 415
 
-    # Retrieve the filter criteria from the payload
-    criteria = data.get('criteria', {})
+    if data is None or not data:
+        return jsonify({'error': 'No data is provided'}), 400
+    if isinstance(data, list):
+        data = {'data': data}
+
+    if 'criteria' not in request.headers:
+        return jsonify({'error': 'You must set a filter criteria before ' +
+                        'starting the filtering process.'}), 400
+
+    # Retrieve the filter criteria from the header
+    criteria_header = request.headers.get('criteria')
+    try:
+        criteria = json.loads(criteria_header) if criteria_header else {}
+    except json.JSONDecodeError:
+        return jsonify({'error': 'Invalid JSON format in criteria header. ' +
+                        'It should be dictionary object.'}), 400
+
+    if not isinstance(criteria, dict):
+        return jsonify(
+            {'error': 'The criteria should be dictionary object.'}), 400
+
+    values = list(criteria.values())
+    if len(values) == 0:
+        return jsonify(
+            {'error': "Empty criteria or dictionary: 'criteria: {}'"}), 400
+    if not isinstance(values[0], dict):
+        return jsonify(
+            {'error': "The 'criteria' value should be in the following" +
+             " format: '<criteria>: {<key> : {<operator>: "
+             "<value to be compared>}}'. Example: " +
+             'criteria: {"Age": {"gt": 18}}'}), 400
+
+    operator = list(values[0].keys())
+    if len(operator) == 0:
+        return jsonify(
+            {'error': "key without operator 'criteria: {'key': {}}'"}), 400
+    print('operator used=', operator)
+    if operator[0] not in ['eq', 'ne', 'gt', 'lt', 'gte', 'lte']:
+        return jsonify(
+            {'error': 'You have used invalid operator. Please ' +
+             "use one of the following instead:" +
+             " ['eq, 'ne', 'gt', 'lt', 'gte', 'lte']"}), 400
 
     # Apply the filter criteria to the data
-    filtered_data = [
-        item
-        for item in data['data']
-        if all(
-            key in item and compare_values(item[key], operator, value)
-            for key, filter_ in criteria.items()
-            for operator, value in filter_.items()
-        )
-    ]
+    try:
+        filtered_data = [
+            item
+            for item in data['data']
+            if all(
+                key in item and compare_values(item[key], operator, value)
+                for key, filter_ in criteria.items()
+                for operator, value in filter_.items()
+            )
+        ]
+    except Exception as e:
+        return jsonify(
+            {'error': 'An Error occurred while filtering data: ' +
+             str(e)}), 400
 
     # Perform pagination on the filtered data
     page = int(request.args.get('page', 1))
@@ -490,7 +634,9 @@ def json_filter():
         'filtered_data': paginated_data
     }
 
-    return jsonify(response)
+    return Response(
+        json.dumps(response, indent=4) + '\n',
+        status=200, mimetype='application/json')
 
 
 def compare_values(item_value, operator, filter_value):

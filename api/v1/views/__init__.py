@@ -4,11 +4,13 @@
 This module defines a Flask Blueprint for handling API views
 related to version 1 ("/api/v1").
 """
+from os import getenv
+
 from flask import Flask, Blueprint
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'thisissecret'
+app.config['SECRET_KEY'] = str(getenv('SECRET_KEY'))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mydatabase.db'
 app.url_map.strict_slashes = False
 

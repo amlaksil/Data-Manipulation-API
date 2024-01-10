@@ -101,7 +101,7 @@ def get_all_users(current_user):
     try:
         if not current_user.admin:
             return jsonify({'message': 'Cannot perform that function!'}), 401
-    except:
+    except Exception:
         return jsonify({'error': 'No user found!'}), 404
 
     users = User.query.all()
@@ -160,11 +160,19 @@ def create_user():
     salt = bcrypt.gensalt()  # Generate a random salt
     hashed_password = bcrypt.hashpw(data['password'].encode('utf-8'), salt)
 
+    os.environ['DM_API_USERNAME'] = data['name']
+    os.environ['DM_API_PASSWORD'] = data['password']
+
+    if data['name'] == os.getenv('ADMIN', ''):
+        admin = True
+    else:
+        admin = False
+
     new_user = User(
             public_id=str(uuid.uuid4()),
             name=data['name'],
             password=hashed_password,
-            admin=True
+            admin=admin
     )
     db.session.add(new_user)
     db.session.commit()
@@ -210,9 +218,9 @@ def login():
     auth = request.authorization
 
     if not auth or not auth.username or not auth.password:
-        return jsonify({
-                'error': 'Missing credentials. Please provide a username and\
-                password.'}), 400
+        return jsonify(
+            {'error': 'Missing credentials. Please provide a username ' +
+             'and password.'}), 400
     user = User.query.filter_by(name=auth.username).first()
 
     if not user:

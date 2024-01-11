@@ -1,0 +1,47 @@
+{
+    "page": 1,
+    "total_pages": 1,
+    "total_records": 8,
+    "filtered_data": [
+        {
+            "Name": "Michael Johnson",
+            "Address": "789 Oak St",
+            "Age": 35
+        },
+        {
+            "Name": "David Brown",
+            "Address": "654 Maple St",
+            "Age": 42
+        },
+        {
+            "Name": "Samantha Wilson",
+            "Address": "987 Cedar St",
+            "Age": 33
+        },
+        {
+            "Name": "Sophia Lee",
+            "Address": "654 Elm Ave",
+            "Age": 31
+        },
+        {
+            "Name": "Isabella Anderson",
+            "Address": "123 Maple Ave",
+            "Age": 36
+        },
+        {
+            "Name": "Liam Clark",
+            "Address": "654 Cedar Ave",
+            "Age": 32
+        },
+        {
+            "Name": "Noah Walker",
+            "Address": "987 Pine Ave",
+            "Age": 35
+        },
+        {
+            "Name": "Sophia Adams",
+            "Address": "789 Elm Ave",
+            "Age": 33
+        }
+    ]
+}

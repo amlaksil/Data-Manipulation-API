@@ -1,0 +1,102 @@
+[
+    {
+        "Name": "John Doe",
+        "Email": "johndoe@example.com",
+        "Phone": 1234567890
+    },
+    {
+        "Name": "Jane Smith",
+        "Email": "janesmith@example.com",
+        "Phone": 9876543210
+    },
+    {
+        "Name": "Michael Johnson",
+        "Email": "michaeljohnson@example.com",
+        "Phone": 5555555555
+    },
+    {
+        "Name": "Emily Davis",
+        "Email": "emilydavis@example.com",
+        "Phone": 1111111111
+    },
+    {
+        "Name": "David Brown",
+        "Email": "davidbrown@example.com",
+        "Phone": 9999999999
+    },
+    {
+        "Name": "Samantha Wilson",
+        "Email": "samanthawilson@example.com",
+        "Phone": 7777777777
+    },
+    {
+        "Name": "Oliver Taylor",
+        "Email": "olivertaylor@example.com",
+        "Phone": 2222222222
+    },
+    {
+        "Name": "Sophia Lee",
+        "Email": "sophialee@example.com",
+        "Phone": 8888888888
+    },
+    {
+        "Name": "Jacob Martinez",
+        "Email": "jacobmartinez@example.com",
+        "Phone": 4444444444
+    },
+    {
+        "Name": "Isabella Anderson",
+        "Email": "isabellaanderson@example.com",
+        "Phone": 6666666666
+    },
+    {
+        "Name": "Ethan Harris",
+        "Email": "ethanharris@example.com",
+        "Phone": 3333333333
+    },
+    {
+        "Name": "Mia Thompson",
+        "Email": "miathompson@example.com",
+        "Phone": 5555555555
+    },
+    {
+        "Name": "Liam Clark",
+        "Email": "liamclark@example.com",
+        "Phone": 9999999999
+    },
+    {
+        "Name": "Ava Lewis",
+        "Email": "avalewis@example.com",
+        "Phone": 7777777777
+    },
+    {
+        "Name": "Noah Walker",
+        "Email": "noahwalker@example.com",
+        "Phone": 1111111111
+    },
+    {
+        "Name": "Emma Hall",
+        "Email": "emmahall@example.com",
+        "Phone": 8888888888
+    },
+    {
+        "Name": "James Wright",
+        "Email": "jameswright@example.com",
+        "Phone": 4444444444
+    },
+    {
+        "Name": "Sophia Adams",
+        "Email": "sophiaadams@example.com",
+        "Phone": 6666666666
+    },
+    {
+        "Name": "Benjamin Rodriguez",
+        "Email": "benjaminrodriguez@example.com",
+        "Phone": 3333333333
+    },
+    {
+        "Name": "Charlotte Murphy",
+        "Email": "charlottemurphy@example.com",
+        "Phone": 5555555555
+    }
+]

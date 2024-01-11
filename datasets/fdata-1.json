@@ -1,0 +1,17 @@
+{
+    "page": 1,
+    "total_pages": 1,
+    "total_records": 2,
+    "filtered_data": [
+        {
+            "Name": "John Doe",
+            "Address": "123 Main St",
+            "Age": 30
+        },
+        {
+            "Name": "Mia Thompson",
+            "Address": "789 Oak Ave",
+            "Age": 30
+        }
+    ]
+}

@@ -1,0 +1,106 @@
+{"data": [
+  {
+    "Email": "johndoe@example.com",
+    "Name": "John Doe",
+    "Phone": 1234567890
+  },
+  {
+    "Email": "janesmith@example.com",
+    "Name": "Jane Smith",
+    "Phone": 9876543210
+  },
+  {
+    "Email": "michaeljohnson@example.com",
+    "Name": "Michael Johnson",
+    "Phone": 5555555555
+  },
+  {
+    "Email": "emilydavis@example.com",
+    "Name": "Emily Davis",
+    "Phone": 1111111111
+  },
+  {
+    "Email": "davidbrown@example.com",
+    "Name": "David Brown",
+    "Phone": 9999999999
+  },
+  {
+    "Email": "samanthawilson@example.com",
+    "Name": "Samantha Wilson",
+    "Phone": 7777777777
+  },
+  {
+    "Email": "olivertaylor@example.com",
+    "Name": "Oliver Taylor",
+    "Phone": 2222222222
+  },
+  {
+    "Email": "sophialee@example.com",
+    "Name": "Sophia Lee",
+    "Phone": 8888888888
+  },
+  {
+    "Email": "jacobmartinez@example.com",
+    "Name": "Jacob Martinez",
+    "Phone": 4444444444
+  },
+  {
+    "Email": "isabellaanderson@example.com",
+    "Name": "Isabella Anderson",
+    "Phone": 6666666666
+  },
+  {
+    "Email": "ethanharris@example.com",
+    "Name": "Ethan Harris",
+    "Phone": 3333333333
+  },
+  {
+    "Email": "miathompson@example.com",
+    "Name": "Mia Thompson",
+    "Phone": 5555555555
+  },
+  {
+    "Email": "liamclark@example.com",
+    "Name": "Liam Clark",
+    "Phone": 9999999999
+  },
+  {
+    "Email": "avalewis@example.com",
+    "Name": "Ava Lewis",
+    "Phone": 7777777777
+  },
+  {
+    "Email": "noahwalker@example.com",
+    "Name": "Noah Walker",
+    "Phone": 1111111111
+  },
+  {
+    "Email": "emmahall@example.com",
+    "Name": "Emma Hall",
+    "Phone": 8888888888
+  },
+  {
+    "Email": "jameswright@example.com",
+    "Name": "James Wright",
+    "Phone": 4444444444
+  },
+  {
+    "Email": "sophiaadams@example.com",
+    "Name": "Sophia Adams",
+    "Phone": 6666666666
+  },
+  {
+    "Email": "benjaminrodriguez@example.com",
+    "Name": "Benjamin Rodriguez",
+    "Phone": 3333333333
+  },
+  {
+    "Email": "charlottemurphy@example.com",
+    "Name": "Charlotte Murphy",
+    "Phone": 5555555555
+  }
+],
+  "criteria": {
+    "Name": { "eq": "Sophia Adams" }
+  }
+}

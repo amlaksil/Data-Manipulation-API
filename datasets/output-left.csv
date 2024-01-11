@@ -1,0 +1,21 @@
+ID,Name,Age,Email,Salary,Department
+1,John Smith,25,john.smith@example.com,,
+2,Jane Doe,30,jane.doe@example.com,6000.0,Finance
+3,Michael Johnson,35,michael.johnson@example.com,7000.0,IT
+4,Sarah Williams,28,sarah.williams@example.com,5500.0,Operations
+5,David Brown,32,david.brown@example.com,8000.0,Sales
+6,Emily Davis,27,emily.davis@example.com,4500.0,Human Resources
+7,Robert Anderson,31,robert.anderson@example.com,6500.0,Research and Development
+8,Olivia Martin,29,olivia.martin@example.com,,
+9,William Thompson,33,william.thompson@example.com,7500.0,Operations
+10,Sophia Garcia,26,sophia.garcia@example.com,5000.0,IT
+11,James Martinez,34,james.martinez@example.com,7000.0,Marketing
+12,Isabella Robinson,31,isabella.robinson@example.com,6000.0,Research and Development
+13,Alexander Clark,28,alexander.clark@example.com,5500.0,Sales
+14,Emma Rodriguez,29,emma.rodriguez@example.com,,
+15,Benjamin Lewis,27,benjamin.lewis@example.com,6500.0,Finance
+16,Ava Lee,30,ava.lee@example.com,8000.0,Operations
+17,Henry Hall,32,henry.hall@example.com,7000.0,IT
+18,Mia Wright,25,mia.wright@example.com,5000.0,Marketing
+19,Joseph Young,26,joseph.young@example.com,,
+20,Abigail King,33,abigail.king@example.com,,

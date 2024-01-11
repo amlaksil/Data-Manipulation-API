@@ -1,0 +1,77 @@
+[
+    {
+        "ID": 2,
+        "Salary": 6000,
+        "Department": "Finance"
+    },
+    {
+        "ID": 3,
+        "Salary": 7000,
+        "Department": "IT"
+    },
+    {
+        "ID": 4,
+        "Salary": 5500,
+        "Department": "Operations"
+    },
+    {
+        "ID": 5,
+        "Salary": 8000,
+        "Department": "Sales"
+    },
+    {
+        "ID": 6,
+        "Salary": 4500,
+        "Department": "Human Resources"
+    },
+    {
+        "ID": 7,
+        "Salary": 6500,
+        "Department": "Research and Development"
+    },
+    {
+        "ID": 9,
+        "Salary": 7500,
+        "Department": "Operations"
+    },
+    {
+        "ID": 10,
+        "Salary": 5000,
+        "Department": "IT"
+    },
+    {
+        "ID": 11,
+        "Salary": 7000,
+        "Department": "Marketing"
+    },
+    {
+        "ID": 12,
+        "Salary": 6000,
+        "Department": "Research and Development"
+    },
+    {
+        "ID": 13,
+        "Salary": 5500,
+        "Department": "Sales"
+    },
+    {
+        "ID": 15,
+        "Salary": 6500,
+        "Department": "Finance"
+    },
+    {
+        "ID": 16,
+        "Salary": 8000,
+        "Department": "Operations"
+    },
+    {
+        "ID": 17,
+        "Salary": 7000,
+        "Department": "IT"
+    },
+    {
+        "ID": 18,
+        "Salary": 5000,
+        "Department": "Marketing"
+    }
+]

@@ -1,0 +1,57 @@
+{
+    "page": 1,
+    "total_pages": 1,
+    "total_records": 10,
+    "filtered_data": [
+        {
+            "Name": "Jane Smith",
+            "Address": "456 Elm St",
+            "Age": 25
+        },
+        {
+            "Name": "Emily Davis",
+            "Address": "321 Pine St",
+            "Age": 28
+        },
+        {
+            "Name": "Oliver Taylor",
+            "Address": "321 Oak Ave",
+            "Age": 24
+        },
+        {
+            "Name": "Jacob Martinez",
+            "Address": "789 Pine Ave",
+            "Age": 27
+        },
+        {
+            "Name": "Ethan Harris",
+            "Address": "456 Birch Ave",
+            "Age": 26
+        },
+        {
+            "Name": "Ava Lewis",
+            "Address": "321 Elm Ave",
+            "Age": 28
+        },
+        {
+            "Name": "Emma Hall",
+            "Address": "123 Maple Ave",
+            "Age": 25
+        },
+        {
+            "Name": "James Wright",
+            "Address": "456 Oak Ave",
+            "Age": 29
+        },
+        {
+            "Name": "Benjamin Rodriguez",
+            "Address": "321 Pine Ave",
+            "Age": 27
+        },
+        {
+            "Name": "Charlotte Murphy",
+            "Address": "323 Pine Ave",
+            "Age": 28
+        }
+    ]
+}

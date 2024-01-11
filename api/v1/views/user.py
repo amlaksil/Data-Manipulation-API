@@ -17,6 +17,7 @@ import base64
 import datetime
 from functools import wraps
 import os
+import re
 import uuid
 
 import jwt
@@ -35,12 +36,14 @@ class User(db.Model):
         id: An integer representing the user's unique identifier.
         public_id: A string representing the user's public ID
         name: A string representing the user's name.
+        email: A string representing the user's email.
         password: A string representing the user's hashed password.
         admin: A boolean indicating whether the user is an admin or not.
     """
     id = db.Column(db.Integer, primary_key=True)
     public_id = db.Column(db.String(50), unique=True)
     name = db.Column(db.String(50))
+    email = db.Column(db.String(100))
     password = db.Column(db.String(80))
     admin = db.Column(db.Boolean)
 
@@ -109,10 +112,11 @@ def get_all_users(current_user):
     output = []
     for user in users:
         user_data = {
-                'public_id': user.public_id,
-                'name': user.name,
-                'password': base64.b64encode(user.password).decode('utf-8'),
-                'admin': user.admin
+            'public_id': user.public_id,
+            'name': user.name,
+            'password': base64.b64encode(user.password).decode('utf-8'),
+            'email': user.email,
+            'admin': user.admin
         }
 
         output.append(user_data)
@@ -138,10 +142,11 @@ def get_user(public_id):
         return jsonify({'error': 'No user found!'}), 404
 
     user_data = {
-            'public_id': user.public_id,
-            'name': user.name,
-            'password': base64.b64encode(user.password).decode('utf-8'),
-            'admin': user.admin
+        'public_id': user.public_id,
+        'name': user.name,
+        'password': base64.b64encode(user.password).decode('utf-8'),
+        'email': user.email,
+        'admin': user.admin
     }
 
     return jsonify({'message': user_data}), 200
@@ -157,6 +162,20 @@ def create_user():
     """
     data = request.get_json()
 
+    if 'email' not in data:
+        return jsonify({'error': 'Email is required!'}), 400
+
+    if 'name' not in data:
+        return jsonify({'error': 'Name is required!'}), 400
+
+    if 'password' not in data:
+        return jsonify({'error': 'Password is required!'}), 400
+
+    user = User.query.filter_by(email=data['email']).first()
+
+    if user:
+        return jsonify({'error': 'User already exist!'}), 409
+
     salt = bcrypt.gensalt()  # Generate a random salt
     hashed_password = bcrypt.hashpw(data['password'].encode('utf-8'), salt)
 
@@ -169,20 +188,30 @@ def create_user():
         admin = False
 
     new_user = User(
-            public_id=str(uuid.uuid4()),
-            name=data['name'],
-            password=hashed_password,
-            admin=admin
+        public_id=str(uuid.uuid4()),
+        name=data['name'],
+        password=hashed_password,
+        email=data['email'],
+        admin=admin
     )
     db.session.add(new_user)
     db.session.commit()
 
-    return jsonify({'message': 'New user created!'}), 200
+    user_data = {
+        'public_id': new_user.public_id,
+        'name': new_user.name,
+        'password': base64.b64encode(new_user.password).decode('utf-8'),
+        'email': new_user.email,
+        'admin': new_user.admin
+    }
+
+    return jsonify(
+        {'message': 'New user created!', 'user_details': user_data}), 200
 
 
 @app_views.route('/user/<public_id>', methods=['DELETE'])
 @token_required
-def delete_user(_, public_id):
+def delete_user(current_user, public_id):
     """
     Deletes a specific user by their public ID.
 
@@ -201,6 +230,29 @@ def delete_user(_, public_id):
     db.session.commit()
 
     return jsonify({'message': 'The user has been deleted!'}), 200
+
+
+@app_views.route('/users/delete-all', methods=['DELETE'])
+@token_required
+def delete_all_users(current_user):
+    """
+    Deletes all users.
+
+    Returns:
+        flask.Response: JSON response indicating the success of the deletion.
+    """
+    if not current_user.admin:
+        return jsonify(
+            {'error': 'Unauthorized! You need admin privileges.'}), 401
+
+    users = User.query.all()
+
+    for user in users:
+        db.session.delete(user)
+
+    db.session.commit()
+
+    return jsonify({'message': 'All users have been deleted!'}), 200
 
 
 @app_views.route('/login')
@@ -229,10 +281,10 @@ def login():
     entered_password = auth.password.encode('utf-8')
     if bcrypt.checkpw(entered_password, user.password):
         token = jwt.encode({
-                'public_id': user.public_id,
-                'exp': datetime.datetime.utcnow() +
-                datetime.timedelta(minutes=30)},
-                app.config['SECRET_KEY']
+            'public_id': user.public_id,
+            'exp': datetime.datetime.utcnow() +
+            datetime.timedelta(minutes=int(os.getenv('TIME_TO_EXPIRE', 30)))},
+            app.config['SECRET_KEY']
         )
         return jsonify({'token': token.decode('UTF-8')}), 200
 
